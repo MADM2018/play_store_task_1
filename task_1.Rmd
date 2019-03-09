@@ -20,7 +20,11 @@ En [kaggle](https://www.kaggle.com/lava18/google-play-store-apps) podéis encont
 
 
 ```{r}
-library("tidyverse")
+library(tidyverse)
+library(tidytext)
+library(dplyr)
+library(stringr)
+
 ```
 
 
@@ -95,38 +99,114 @@ top10_cat_reviews <-
 knitr::kable(top10_cat_reviews)
 
 ```
+
 ##  Análisis de sentimiento
+Utilizar los tres  diccionarios que hemos visto para análisis de sentimiento  y comparar con las calificaciones de los reviews que se dan en kaggle
 
-Utilizar los tres  diccionarios que hemos visto para análisis de sentimiento   y comparar con las calificaciones de los reviews que se dan en kaggle
-
-
+### Separamos las palabras de cada reviews y las reviews para cada App
 ```{r}
-library(tidytext)
-library(dplyr)
-library(stringr)
-tidy_reviews<- reviews_apps %>% mutate(Review_num =  row_number()) %>% unnest_tokens(word, Translated_Review )
+tidy_reviews <- 
+  reviews_apps %>%
+  mutate(Review_num = row_number()) %>% 
+  unnest_tokens(word, Translated_Review)
 
+apps_review <- 
+  reviews_apps %>% 
+  transmute(Review_num = row_number(), App = App)
+```
 
-tidy_reviews <- tidy_reviews %>% inner_join(get_sentiments("afinn")) 
-tidy_reviews
+### Usando AFINN
+
+Agregamos una columna con el score de AFINN
+```{r}
+
+reviews_sentiments <- 
+  tidy_reviews %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  mutate(affin_score = score, score = NULL)
+
+head(reviews_sentiments)
 ```
 
 
+Calculamos la suma de los scores de AFINN de las review 
 ```{r}
-app_review <-reviews_apps %>% transmute(Review_num=row_number(),App=App)
 
-afinn <- tidy_reviews %>% group_by(Review_num) %>% summarise(score_sum=sum(score)) %>% inner_join(app_review)
+afinn <- 
+  reviews_sentiments %>% 
+  group_by(Review_num) %>% 
+  summarise(score_sum = sum(affin_score)) %>% 
+  inner_join(app_review)
 
-afinn
 ```
 
 
-Seleccionamos las  10 Apps con más reviews, definimos un índice que nos dé el número de review por App. 
+Gráficamos los scores de las  10 Apps con más reviews
 
 ```{r}
-afinn %>% filter(App %in% top10$App) %>% group_by(App) %>% mutate(index=row_number()) %>% ggplot(aes(index, score_sum, fill = App)) +
+afinn %>% 
+  filter(App %in% top10_apps_reviews$App) %>% 
+  group_by(App) %>% 
+  mutate(review = row_number()) %>%
+  ggplot(aes(review, score_sum, fill = App)) +
   geom_col(show.legend = FALSE)+facet_wrap(~App, ncol = 2, scales = "free_y")
 ```
+
+### Usando BING
+
+Agregamos una columna con el score de BING
+```{r}
+
+reviews_sentiments <- 
+  tidy_reviews %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  mutate(bing_score = sentiment, sentiment = NULL)
+
+head(reviews_sentiments)
+```
+
+
+Calculamos la diferencia entre positivos y negativos de las review 
+```{r}
+
+bing <-
+  reviews_sentiments %>% 
+  group_by(Review_num) %>% 
+  count(App, index = row_number(), bing_score) %>%
+  spread(bing_score, n, fill = 0) %>%
+  mutate(bing_score2 = positive - negative) %>%
+  summarise(score_sum = sum(bing_score2)) %>%
+  inner_join(app_review)
+
+```
+
+
+
+Gráficamos los scores de las  10 Apps con más reviews
+
+```{r}
+bing %>% 
+  filter(App %in% top10_apps_reviews$App) %>% 
+  group_by(App) %>% 
+  mutate(review = row_number()) %>%
+  ggplot(aes(review, score_sum, fill = App)) +
+  geom_col(show.legend = FALSE)+facet_wrap(~App, ncol = 2, scales = "free_y")
+```
+
+
+### Usando NRC
+
+Agregamos una columna con el score de NRC
+```{r}
+
+reviews_sentiments <- 
+  tidy_reviews %>% 
+  inner_join(get_sentiments("nrc")) %>% 
+  mutate(nrc_score = sentiment, sentiment = NULL)
+
+head(reviews_sentiments)
+```
+
 
 
 
