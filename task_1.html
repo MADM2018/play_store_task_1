@@ -218,7 +218,9 @@ $(document).ready(function () {
 <pre class="r"><code>library(tidyverse)
 library(tidytext)
 library(dplyr)
-library(stringr)</code></pre>
+library(stringr)
+library(wordcloud)
+library(reshape2)</code></pre>
 <pre class="r"><code>metadata_apps=read_csv(&quot;googleplaystore.csv&quot;)
 reviews_apps=read_csv(&quot;googleplaystore_user_reviews.csv&quot;)</code></pre>
 <p>Limpiamos un poco los datos</p>

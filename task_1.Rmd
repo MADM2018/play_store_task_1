@@ -422,3 +422,14 @@ worst_words <- top10_worst_reviews %>%
    
 ```
 
+
+```{r fig.height=12, fig.width=10, echo=FALSE}
+worst_words %>%
+  ggplot(aes(word, tf_idf, fill = App)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = "word", y = "tf-idf") +
+  facet_wrap(~App, ncol = 2, scales = "free") +
+  coord_flip()
+
+```
+
