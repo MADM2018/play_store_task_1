@@ -325,8 +325,6 @@ total_words <- cat_words %>%
 
 all_words <- left_join(cat_words, total_words)
 
-head(all_words)
-
 ```
 
 Ahora mostraremos un gráfico de las 10 categorias con mas reviews y su distribución de la frecuencia de términos
@@ -362,6 +360,73 @@ tfidf_words %>%
   geom_col(show.legend = FALSE) +
   labs(x = NULL, y = "tf-idf") +
   facet_wrap(~Category, ncol = 2, scales = "free") +
+  coord_flip()
+
+```
+
+Ahora mostraremos los 10 terminos mas usados de las 10 reviews mas positivas de las apps con mas reviews, usaremos los resultados anteriores de AFINN como referencia
+
+```{r}
+top10_best_reviews <- afinn %>%
+  filter(App %in% top10_apps_reviews$App) %>%
+  group_by(App) %>%
+  arrange(desc(score_sum)) %>%
+  filter(row_number() <= 10)
+  
+best_words <- top10_best_reviews %>%
+  inner_join(tidy_reviews %>% mutate(App = NULL)) %>%
+  inner_join(app_categories) %>%
+  inner_join(tfidf_words, by=c("word", "Category")) %>%
+  group_by(App) %>%
+  distinct(word, .keep_all = TRUE) %>%
+  ungroup() %>%
+  arrange(App, desc(tf_idf)) %>%
+  group_by(App) %>%
+  filter(row_number() <= 10)
+   
+```
+
+
+```{r fig.height=12, fig.width=10, echo=FALSE}
+best_words %>%
+  ggplot(aes(word, tf_idf, fill = App)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = "word", y = "tf-idf") +
+  facet_wrap(~App, ncol = 2, scales = "free") +
+  coord_flip()
+
+```
+
+
+Ahora mostraremos los 10 terminos mas usados de las 5 reviews mas negativas de las apps con mas reviews, usaremos los resultados anteriores de AFINN como referencia
+
+```{r}
+top10_worst_reviews <- afinn %>%
+  filter(App %in% top10_apps_reviews$App) %>%
+  group_by(App) %>%
+  arrange(score_sum) %>%
+  filter(row_number() <= 5)
+  
+worst_words <- top10_worst_reviews %>%
+  inner_join(tidy_reviews %>% mutate(App = NULL)) %>%
+  inner_join(app_categories) %>%
+  inner_join(tfidf_words, by=c("word", "Category")) %>%
+  group_by(App) %>%
+  distinct(word, .keep_all = TRUE) %>%
+  ungroup() %>%
+  arrange(App, desc(tf_idf)) %>%
+  group_by(App) %>%
+  filter(row_number() <= 10)
+   
+```
+
+
+```{r fig.height=12, fig.width=10, echo=FALSE}
+worst_words %>%
+  ggplot(aes(word, tf_idf, fill = App)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = "word", y = "tf-idf") +
+  facet_wrap(~App, ncol = 2, scales = "free") +
   coord_flip()
 
 ```
