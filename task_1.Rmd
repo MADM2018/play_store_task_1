@@ -32,6 +32,8 @@ library(tidyverse)
 library(tidytext)
 library(dplyr)
 library(stringr)
+library(wordcloud)
+library(reshape2)
 ```
 
 
@@ -132,7 +134,7 @@ reviews_sentiments <-
   inner_join(get_sentiments("afinn")) %>% 
   mutate(affin_score = score, score = NULL)
 
-head(reviews_sentiments)
+knitr::kable(head(reviews_sentiments))
 ```
 
 
@@ -176,7 +178,7 @@ reviews_sentiments <-
   inner_join(get_sentiments("bing")) %>% 
   mutate(bing_score = sentiment, sentiment = NULL)
 
-head(reviews_sentiments)
+knitr::kable(head(reviews_sentiments))
 ```
 
 
@@ -227,7 +229,7 @@ reviews_sentiments <-
   inner_join(get_sentiments("nrc") %>% filter(sentiment %in% c("positive", "negative"))) %>%
   mutate(nrc_score = sentiment, sentiment = NULL)
 
-head(reviews_sentiments)
+knitr::kable(head(reviews_sentiments))
 ```
 
 
@@ -297,7 +299,7 @@ tidy_rev_cat <-
   tidy_reviews %>%
   inner_join(app_categories)
 
-head(tidy_rev_cat)
+knitr::kable(head(tidy_rev_cat))
 ```
 
 Ahora procedemos a remover las stopwords de las reviews
@@ -307,7 +309,7 @@ tidy_rev_cat <-
   tidy_rev_cat %>%
   anti_join(stop_words, by = c("word" = "word"))
 
-head(tidy_rev_cat)
+knitr::kable(head(tidy_rev_cat))
 ```
 
 Calcularemos la cantidad total de términos y la frecuencia de cada uno, agrupando por categoria las apps
@@ -420,13 +422,3 @@ worst_words <- top10_worst_reviews %>%
    
 ```
 
-
-```{r fig.height=12, fig.width=10, echo=FALSE}
-worst_words %>%
-  ggplot(aes(word, tf_idf, fill = App)) +
-  geom_col(show.legend = FALSE) +
-  labs(x = "word", y = "tf-idf") +
-  facet_wrap(~App, ncol = 2, scales = "free") +
-  coord_flip()
-
-```
